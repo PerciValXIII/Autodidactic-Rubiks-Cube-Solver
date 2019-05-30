@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import IntEnum
 
 
-class Move(Enum):
+class Move(IntEnum):
     """We can suppose that th cube's front-right-upper cubelet
     is stationary, so there are only 6 moves available"""
     LEFT = 1
