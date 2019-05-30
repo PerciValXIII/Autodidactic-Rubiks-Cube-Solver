@@ -27,6 +27,10 @@ class Cube:
         elif move == Move.DOWN: self._move_down()
         else: assert False, 'Invalid move'
 
+    def is_solved(self) -> bool:
+        return all([len(set(face)) == 1
+                    for face in self._faces.values()])
+
     def _move_left(self):
         self._rotate_clockwise('left')
         a, b = self.front[0], self.front[2]
@@ -47,13 +51,13 @@ class Cube:
         self._rotate_clockwise('down')
         a, b, = self.front[2], self.front[3]
         self.front[2], self.front[3] = self.left[2], self.left[3]
-        self.right[2], self.right[3], a, b = a, b, self.back[2], self.back[3]
+        self.right[2], self.right[3], a, b = a, b, self.right[2], self.right[3]
         self.back[2], self.back[3], a, b = a, b, self.back[2], self.back[3]
         self.left[2], self.left[3] = a, b
 
     def _rotate_clockwise(self, face_name: str):
-        face = self._faces[face_name]
-        self._faces[face_name] = face[-1:] + face[:-1]
+        f = self._faces[face_name]
+        self._faces[face_name] = [f[2], f[0], f[3], f[1]]
 
     @property
     def up(self): return self._faces['up']
