@@ -1,4 +1,5 @@
 import copy
+from typing import Optional, Iterable
 
 import numpy as np
 
@@ -9,10 +10,11 @@ COLORS_MAPPING = {'white' : 0, 'blue': 1, 'red': 2,
 
 
 class Cube:
-    def __init__(self):
-        self._reset_faces()
+    def __init__(self, cube: Optional['Cube'] = None):
+        if cube is None: self.reset()
+        else: self._faces = copy.deepcopy(cube._faces)
 
-    def _reset_faces(self):
+    def reset(self):
         """Face indexing:   [0][1]
                             [2][3], due to the stationary position"""
         self._faces = {
@@ -106,9 +108,7 @@ class Cube:
 
 class ImmutableCube(Cube):
     def change_by(self, move: Move) -> Cube:
-        cp = Cube()
-        cp._faces = copy.deepcopy(self._faces)
-        return cp.change_by(move)
+        return Cube(self).change_by(move)
 
     @property
     def up(self): return copy.deepcopy(super().up)
@@ -127,3 +127,8 @@ class ImmutableCube(Cube):
 
     @property
     def down(self): return copy.deepcopy(super().down)
+
+
+def get_children_of(cube: Cube) -> Iterable[Cube]:
+    imm = ImmutableCube(cube)
+    return (imm.change_by(move) for move in list(Move))

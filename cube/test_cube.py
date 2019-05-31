@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from cube.model import Cube, ImmutableCube
+from cube.model import Cube, ImmutableCube, get_children_of
 from cube.moves import Move
 
 
@@ -57,3 +57,9 @@ class CubeTest(TestCase):
 
         self.assertTrue(imm.is_solved())
         self.assertFalse(changed.is_solved())
+
+    def test_get_children_of(self):
+        cube = Cube()
+        children = list(get_children_of(cube))
+
+        self.assertEqual(6, len(children))
