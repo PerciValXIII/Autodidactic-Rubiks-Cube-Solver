@@ -105,6 +105,13 @@ class Cube:
     @property
     def down(self): return self._faces['down']
 
+    def __eq__(self, other):
+        return isinstance(other, Cube) and self._faces == other._faces
+
+    def __hash__(self):
+        tuples = [tuple([key] + values) for key, values in self._faces.items()]
+        return hash(tuple(tuples))
+
 
 class ImmutableCube(Cube):
     def change_by(self, move: Move) -> Cube:

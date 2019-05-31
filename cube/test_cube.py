@@ -63,3 +63,13 @@ class CubeTest(TestCase):
         children = list(get_children_of(cube))
 
         self.assertEqual(6, len(children))
+
+    def test_hash_cube(self):
+        hash_map = dict()
+        hash_map[ImmutableCube().change_by(Move.DOWN)] = 1
+        hash_map[Cube().change_by(Move.DOWN)] = 2
+        hash_map[ImmutableCube().change_by(Move.DOWN)] = 5
+        hash_map[Cube().change_by(Move.LEFT)] = 3
+
+        self.assertEqual(2, len(hash_map))
+        self.assertEqual(5, hash_map[Cube().change_by(Move.DOWN)])
