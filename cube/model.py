@@ -1,3 +1,5 @@
+import numpy as np
+
 from cube.moves import Move
 
 COLORS_MAPPING = {'white' : 0, 'blue': 1, 'red': 2,
@@ -30,6 +32,27 @@ class Cube:
     def is_solved(self) -> bool:
         return all([len(set(face)) == 1
                     for face in self._faces.values()])
+
+    def one_hot_encode(self, dtype: type = bool) -> np.array:
+        result = np.zeros((14, 6), dtype=dtype)
+
+        result[0, self.up[2]] = 1
+        result[1, self.front[0]] = 1
+        result[2, self.up[0]] = 1
+        result[3, self.left[0]] = 1
+        result[4, self.up[1]] = 1
+        result[5, self.back[0]] = 1
+
+        result[6, self.down[0]] = 1
+        result[7, self.front[2]] = 1
+        result[8, self.down[1]] = 1
+        result[9, self.right[2]] = 1
+        result[10, self.down[2]] = 1
+        result[11, self.left[2]] = 1
+        result[12, self.down[3]] = 1
+        result[13, self.back[2]] = 1
+
+        return result
 
     def _move_left(self):
         self._rotate_clockwise('left')
