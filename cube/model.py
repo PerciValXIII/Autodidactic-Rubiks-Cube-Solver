@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 
 from cube.moves import Move
@@ -22,12 +24,13 @@ class Cube:
             'down' : 4 * [COLORS_MAPPING['yellow']]
         }
 
-    def change_by(self, move: Move):
+    def change_by(self, move: Move) -> 'Cube':
         if move < 0: [self.change_by(-move) for _ in range(3)]
         elif move == Move.LEFT: self._move_left()
         elif move == Move.BACK: self._move_back()
         elif move == Move.DOWN: self._move_down()
         else: assert False, 'Invalid move'
+        return self
 
     def is_solved(self) -> bool:
         return all([len(set(face)) == 1
@@ -99,3 +102,28 @@ class Cube:
 
     @property
     def down(self): return self._faces['down']
+
+
+class ImmutableCube(Cube):
+    def change_by(self, move: Move) -> Cube:
+        cp = Cube()
+        cp._faces = copy.deepcopy(self._faces)
+        return cp.change_by(move)
+
+    @property
+    def up(self): return copy.deepcopy(super().up)
+
+    @property
+    def front(self): return copy.deepcopy(super().front)
+
+    @property
+    def right(self): return copy.deepcopy(super().right)
+
+    @property
+    def left(self): return copy.deepcopy(super().left)
+
+    @property
+    def back(self): return copy.deepcopy(super().back)
+
+    @property
+    def down(self): return copy.deepcopy(super().down)

@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from cube.model import Cube
+from cube.model import Cube, ImmutableCube
 from cube.moves import Move
 
 
@@ -43,3 +43,17 @@ class CubeTest(TestCase):
         c.change_by(Move.LEFT)
         c.change_by(Move.BACK_CTR)
         self.assertTrue(c.is_solved())
+
+    def test_mutability(self):
+        mut = Cube()
+        changed = mut.change_by(Move.DOWN)
+
+        self.assertFalse(mut.is_solved())
+        self.assertListEqual(mut.front, changed.front)
+
+    def test_immutability(self):
+        imm = ImmutableCube()
+        changed = imm.change_by(Move.DOWN)
+
+        self.assertTrue(imm.is_solved())
+        self.assertFalse(changed.is_solved())
