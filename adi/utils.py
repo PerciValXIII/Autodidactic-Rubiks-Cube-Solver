@@ -1,4 +1,4 @@
-from typing import NamedTuple
+from typing import NamedTuple, List
 
 import numpy as np
 
@@ -44,3 +44,13 @@ def MSE_derivative(x: float, y: float) -> float:
 
 MSE_operators = OperatorPair(np.vectorize(MSE),
                              np.vectorize(MSE_derivative))
+
+
+def softmax(x: np.array):
+    exps = np.exp(x - np.max(x))
+
+    return exps / np.sum(exps)
+
+
+def cross_entropy(guesses: np.array, answers: List) -> float:
+    return -np.sum(np.nan_to_num(np.log(guesses[answers, range(len(answers))])))
