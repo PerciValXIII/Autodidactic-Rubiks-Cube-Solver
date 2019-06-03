@@ -1,8 +1,8 @@
-from typing import List
+from typing import List, Union
 
 import numpy as np
 
-from adi.utils import OperatorPair, sigmoid_operators, softmax, cross_entropy
+from adi.utils import OperatorPair, sigmoid_operators, softmax, cross_entropy, ELU_operators, MSE_operators
 
 
 class NNModule:
@@ -13,7 +13,7 @@ class NNModule:
 
     def _setup(self):
         self._nlayers = len(self._sizes)
-        self._learning_rate = 0.01
+        self._learning_rate = 0.00001
         self._z = [np.zeros((s, 1)) for s in self._sizes]
         self._a = [np.zeros((s, 1)) for s in self._sizes]
         self._init_weights()
@@ -31,7 +31,7 @@ class NNModule:
         self._feed_forward(X)
         return self._a[-1] if activation_applied else self._z[-1]
 
-    def learn(self, X: np.array, Y: np.array):
+    def learn(self, X: np.array, Y: Union[np.array, List[int]]):
         raise NotImplemented
 
     def _feed_forward(self, X: np.array):
@@ -63,9 +63,46 @@ class SoftmaxCrossEntropyNNModule(NNModule):
 
         self._feed_forward(X)
         cost = cross_entropy(self._a[-1], Y)
+        print(cost)
 
         delta, rate = self._a[-1], self._learning_rate / batch_size
         delta[Y, range(batch_size)] -= 1.
+
+        nabla_W = [delta @ self._a[-2].T]
+        nabla_b = [np.sum(delta, 1)[:, None]]
+
+        assert nabla_W[0].shape == self._W[-1].shape
+        assert nabla_b[0].shape == self._b[-1].shape
+
+        for l in range(2, self._nlayers):
+            delta = np.dot(self._W[-l + 1].T, delta) * self._activ.der(self._z[-l])
+            nabla_W.insert(0, delta @ self._a[-l - 1].T)
+            nabla_b.insert(0, np.sum(delta, 1)[:, None])
+
+        for l in range(self._nlayers - 1):
+            self._W[l] -= rate * nabla_W[l]
+            self._b[l] -= rate * nabla_b[l]
+
+
+class MSENNModule(NNModule):
+    def __init__(self, sizes: List[int]):
+        super().__init__(sizes, ELU_operators)
+
+    def _setup(self):
+        super()._setup()
+        self._cost = MSE_operators
+
+    def learn(self, X: np.array, Y: np.array):
+        batch_size = X.shape[1]
+        assert X.shape[0] == self._sizes[0]
+        assert Y.shape == (self._sizes[-1], batch_size)
+
+        self._feed_forward(X)
+        cost = self._cost.func(self._a[-1], Y)
+        print(np.max(cost))
+
+        rate = self._learning_rate / batch_size
+        delta = self._cost.der(self._a[-1], Y) * self._activ.der(self._z[-1])
 
         nabla_W = [delta @ self._a[-2].T]
         nabla_b = [np.sum(delta, 1)[:, None]]
