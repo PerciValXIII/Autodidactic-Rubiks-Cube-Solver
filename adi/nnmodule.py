@@ -6,14 +6,14 @@ from adi.utils import OperatorPair, sigmoid_operators, softmax, cross_entropy, E
 
 
 class NNModule:
-    def __init__(self, sizes: List[int], activation_operators: OperatorPair):
+    def __init__(self, sizes: List[int], activation_operators: OperatorPair, learning_rate: float):
         self._sizes = sizes
         self._activ = activation_operators
+        self._learning_rate = learning_rate
         self._setup()
 
     def _setup(self):
         self._nlayers = len(self._sizes)
-        self._learning_rate = 0.00001
         self._z = [np.zeros((s, 1)) for s in self._sizes]
         self._a = [np.zeros((s, 1)) for s in self._sizes]
         self._init_weights()
@@ -31,8 +31,11 @@ class NNModule:
         self._feed_forward(X)
         return self._a[-1] if activation_applied else self._z[-1]
 
-    def learn(self, X: np.array, Y: Union[np.array, List[int]]):
+    def learn(self, X: np.array, Y: Union[np.array, List[int]]) -> np.array:
         raise NotImplemented
+
+    def learn_from_delta(self, delta: np.array, rate: float):
+        self._propagate_and_return_delta(delta, rate)
 
     def _feed_forward(self, X: np.array):
         assert X.shape[0] == self._sizes[0]
@@ -46,16 +49,33 @@ class NNModule:
         assert self._a[-1].shape == (self._sizes[-1], X.shape[1])
         assert self._z[-1].shape == (self._sizes[-1], X.shape[1])
 
+    def _propagate_and_return_delta(self, delta: np.array, rate: float) -> np.array:
+        nabla_W = [delta @ self._a[-2].T]
+        nabla_b = [np.sum(delta, 1)[:, None]]
+
+        assert nabla_W[0].shape == self._W[-1].shape
+        assert nabla_b[0].shape == self._b[-1].shape
+
+        for l in range(2, self._nlayers):
+            delta = np.dot(self._W[-l + 1].T, delta) * self._activ.der(self._z[-l])
+            nabla_W.insert(0, delta @ self._a[-l - 1].T)
+            nabla_b.insert(0, np.sum(delta, 1)[:, None])
+        for l in range(self._nlayers - 1):
+            self._W[l] -= rate * nabla_W[l]
+            self._b[l] -= rate * nabla_b[l]
+
+        return np.dot(self._W[0].T, delta) * self._activ.der(self._z[0])
+
 
 class SoftmaxCrossEntropyNNModule(NNModule):
-    def __init__(self, sizes: List[int]):
-        super().__init__(sizes, sigmoid_operators)
+    def __init__(self, sizes: List[int], learning_rate: float):
+        super().__init__(sizes, sigmoid_operators, learning_rate)
 
     def _feed_forward(self, X: np.array):
         super()._feed_forward(X)
         self._a[-1] = np.apply_along_axis(softmax, 0, self._z[-1])
 
-    def learn(self, X: np.array, Y: List[int]):
+    def learn(self, X: np.array, Y: List[int]) -> np.array:
         batch_size = X.shape[1]
         assert X.shape[0] == self._sizes[0]
         assert len(Y) == batch_size
@@ -65,34 +85,21 @@ class SoftmaxCrossEntropyNNModule(NNModule):
         cost = cross_entropy(self._a[-1], Y)
         print(cost)
 
-        delta, rate = self._a[-1], self._learning_rate / batch_size
+        delta = self._a[-1]
         delta[Y, range(batch_size)] -= 1.
 
-        nabla_W = [delta @ self._a[-2].T]
-        nabla_b = [np.sum(delta, 1)[:, None]]
-
-        assert nabla_W[0].shape == self._W[-1].shape
-        assert nabla_b[0].shape == self._b[-1].shape
-
-        for l in range(2, self._nlayers):
-            delta = np.dot(self._W[-l + 1].T, delta) * self._activ.der(self._z[-l])
-            nabla_W.insert(0, delta @ self._a[-l - 1].T)
-            nabla_b.insert(0, np.sum(delta, 1)[:, None])
-
-        for l in range(self._nlayers - 1):
-            self._W[l] -= rate * nabla_W[l]
-            self._b[l] -= rate * nabla_b[l]
+        return self._propagate_and_return_delta(delta, self._learning_rate / batch_size)
 
 
 class MSENNModule(NNModule):
-    def __init__(self, sizes: List[int]):
-        super().__init__(sizes, ELU_operators)
+    def __init__(self, sizes: List[int], learning_rate: float):
+        super().__init__(sizes, ELU_operators, learning_rate)
 
     def _setup(self):
         super()._setup()
         self._cost = MSE_operators
 
-    def learn(self, X: np.array, Y: np.array):
+    def learn(self, X: np.array, Y: np.array) -> np.array:
         batch_size = X.shape[1]
         assert X.shape[0] == self._sizes[0]
         assert Y.shape == (self._sizes[-1], batch_size)
@@ -101,20 +108,6 @@ class MSENNModule(NNModule):
         cost = self._cost.func(self._a[-1], Y)
         print(np.max(cost))
 
-        rate = self._learning_rate / batch_size
         delta = self._cost.der(self._a[-1], Y) * self._activ.der(self._z[-1])
 
-        nabla_W = [delta @ self._a[-2].T]
-        nabla_b = [np.sum(delta, 1)[:, None]]
-
-        assert nabla_W[0].shape == self._W[-1].shape
-        assert nabla_b[0].shape == self._b[-1].shape
-
-        for l in range(2, self._nlayers):
-            delta = np.dot(self._W[-l + 1].T, delta) * self._activ.der(self._z[-l])
-            nabla_W.insert(0, delta @ self._a[-l - 1].T)
-            nabla_b.insert(0, np.sum(delta, 1)[:, None])
-
-        for l in range(self._nlayers - 1):
-            self._W[l] -= rate * nabla_W[l]
-            self._b[l] -= rate * nabla_b[l]
+        return self._propagate_and_return_delta(delta, self._learning_rate / batch_size)
