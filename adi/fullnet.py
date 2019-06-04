@@ -36,10 +36,10 @@ class FullNet:
 
         return [ValuePolicyPair(v, p) for v, p in zip(values, policies)]
 
-    def learn(self, X: np.array, values: List[float], policies: List[int]):
+    def learn(self, X: np.array, values: List[float], policies: List[int], weights: List[int]):
         body_out = self._body_net.evaluate(X)
-        value_delta = self._value_net.learn(body_out, np.array([values]))
-        policy_delta = self._policy_net.learn(body_out, policies)
+        value_delta = self._value_net.learn(body_out, np.array([values]), weights)
+        policy_delta = self._policy_net.learn(body_out, policies, weights)
 
         self._body_net.learn_from_delta(value_delta, BODY_LEARNING_RATE * VALUE_PROP_FACTOR)
         self._body_net.learn_from_delta(policy_delta, BODY_LEARNING_RATE * POLICY_PROP_FACTOR)

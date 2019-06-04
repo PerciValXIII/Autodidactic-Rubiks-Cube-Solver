@@ -53,5 +53,5 @@ def softmax(x: np.array):
     return exps / np.sum(exps)
 
 
-def cross_entropy(guesses: np.array, answers: List) -> float:
-    return -np.sum(np.nan_to_num(np.log(guesses[answers, range(len(answers))])))
+def cross_entropy(guesses: np.array, answers: List[int], weights: List[int]) -> float:
+    return -np.sum(np.nan_to_num(weights * np.log(guesses[answers, range(len(answers))])))

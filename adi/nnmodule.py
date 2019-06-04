@@ -31,7 +31,7 @@ class NNModule:
         self._feed_forward(X)
         return self._a[-1] if activation_applied else self._z[-1]
 
-    def learn(self, X: np.array, Y: Union[np.array, List[int]]) -> np.array:
+    def learn(self, X: np.array, Y: Union[np.array, List[int]], weights: List[int]) -> np.array:
         raise NotImplemented
 
     def learn_from_delta(self, delta: np.array, rate: float):
@@ -75,14 +75,14 @@ class SoftmaxCrossEntropyNNModule(NNModule):
         super()._feed_forward(X)
         self._a[-1] = np.apply_along_axis(softmax, 0, self._z[-1])
 
-    def learn(self, X: np.array, Y: List[int]) -> np.array:
+    def learn(self, X: np.array, Y: List[int], weights: List[int]) -> np.array:
         batch_size = X.shape[1]
         assert X.shape[0] == self._sizes[0]
-        assert len(Y) == batch_size
+        assert len(Y) == len(weights) == batch_size
         assert all((ans in range(self._sizes[-1]) for ans in Y))
 
         self._feed_forward(X)
-        cost = cross_entropy(self._a[-1], Y)
+        cost = cross_entropy(self._a[-1], Y, weights)
         print(f'SoftmaxCost:\t{cost}')
 
         delta = self._a[-1]
@@ -99,10 +99,11 @@ class MSENNModule(NNModule):
         super()._setup()
         self._cost = MSE_operators
 
-    def learn(self, X: np.array, Y: np.array) -> np.array:
+    def learn(self, X: np.array, Y: np.array, weights: List[int]) -> np.array:
         batch_size = X.shape[1]
         assert X.shape[0] == self._sizes[0]
         assert Y.shape == (self._sizes[-1], batch_size)
+        assert len(weights) == batch_size
 
         self._feed_forward(X)
         cost = self._cost.func(self._a[-1], Y)

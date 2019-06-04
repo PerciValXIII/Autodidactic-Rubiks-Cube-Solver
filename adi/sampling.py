@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterable, NamedTuple
 
 import numpy as np
 
@@ -6,7 +6,12 @@ from cube.model import Cube
 from cube.moves import Move
 
 
-def generate_samples(depth: int, iterations: int) -> Iterable[Cube]:
+class Sample(NamedTuple):
+    cube: Cube
+    depth: int
+
+
+def generate_samples(depth: int, iterations: int) -> Iterable[Sample]:
     def get_next_move(last_move):
         while True:
             next_move = np.random.choice(list(Move))
@@ -14,6 +19,6 @@ def generate_samples(depth: int, iterations: int) -> Iterable[Cube]:
 
     for _ in range(iterations):
         c, last_move = Cube(), None
-        for _ in range(depth):
+        for d in range(depth):
             last_move = move = get_next_move(last_move)
-            yield Cube(c.change_by(move))
+            yield Sample(Cube(c.change_by(move)), d + 1)

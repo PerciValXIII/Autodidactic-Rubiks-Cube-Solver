@@ -27,7 +27,7 @@ class AutodidacticIterator:
             X = list(generate_samples(depth=self._sampling_depth,
                                       iterations=self._sampling_iterations))
             best_values, best_policies = [], []
-            for x in X:
+            for x, _ in X:
                 values = []
                 for child in get_children_of(x):
                     estimated_value = self._net.evaluate(child.one_hot_encode(float).T[:, None])[0].value
@@ -36,9 +36,12 @@ class AutodidacticIterator:
                 best_values.append(np.max(values))
                 best_policies.append(np.argmax(values))
 
-            self._net.learn(X=np.array([x.one_hot_encode(float) for x in X]).T,
-                            values=best_values, policies=best_policies)
+            cubes = [sample.cube for sample in X]
+            depths = [1. / sample.depth for sample in X]
+            self._net.learn(X=np.array([x.one_hot_encode(float) for x in cubes]).T,
+                            values=best_values, policies=best_policies, weights=depths)
 
 
 if __name__ == '__main__':
+    np.random.seed(0)
     AutodidacticIterator().train()
