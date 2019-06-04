@@ -83,7 +83,7 @@ class SoftmaxCrossEntropyNNModule(NNModule):
 
         self._feed_forward(X)
         cost = cross_entropy(self._a[-1], Y)
-        print(cost)
+        print(f'SoftmaxCost:\t{cost}')
 
         delta = self._a[-1]
         delta[Y, range(batch_size)] -= 1.
@@ -106,7 +106,7 @@ class MSENNModule(NNModule):
 
         self._feed_forward(X)
         cost = self._cost.func(self._a[-1], Y)
-        print(np.max(cost))
+        print(f'MSECost:\t\t{np.max(cost)}')
 
         delta = self._cost.der(self._a[-1], Y) * self._activ.der(self._z[-1])
 

@@ -31,8 +31,8 @@ class FullNet:
 
     def evaluate(self, X: np.array) -> List[ValuePolicyPair]:
         body_out = self._body_net.evaluate(X)
-        values = self._policy_net.evaluate(body_out)
-        policies = self._policy_net.evaluate(body_out)
+        values = [value[0] for value in self._value_net.evaluate(body_out).T]
+        policies = self._policy_net.evaluate(body_out).T
 
         return [ValuePolicyPair(v, p) for v, p in zip(values, policies)]
 
@@ -43,20 +43,3 @@ class FullNet:
 
         self._body_net.learn_from_delta(value_delta, BODY_LEARNING_RATE * VALUE_PROP_FACTOR)
         self._body_net.learn_from_delta(policy_delta, BODY_LEARNING_RATE * POLICY_PROP_FACTOR)
-
-
-if __name__ == '__main__':
-    f = FullNet([4, 12, 8],
-                [8, 4, 1],
-                [8, 16, 6])
-
-    X = np.array([[1, 2, 3],
-                  [2, 4, 1],
-                  [4, 1, 2],
-                  [3, 3, 4]])
-
-    values = [0.8, 0.4, 0.4]
-    policies = [2, 0, 0]
-
-    for _ in range(100):
-        f.learn(X, values, policies)

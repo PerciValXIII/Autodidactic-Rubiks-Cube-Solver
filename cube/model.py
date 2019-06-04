@@ -57,7 +57,7 @@ class Cube:
         result[12, self.down[3]] = 1
         result[13, self.back[2]] = 1
 
-        return result
+        return result.flatten()
 
     def _move_left(self):
         self._rotate_clockwise('left')

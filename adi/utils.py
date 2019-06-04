@@ -9,7 +9,8 @@ class OperatorPair(NamedTuple):
 
 
 def sigmoid(x: float) -> float:
-    return 1. / (1. + np.nan_to_num(np.math.exp(-x)))
+    if x < 0: return 1. - 1. / (1. + np.math.exp(x))
+    return 1. / (1. + np.math.exp(-x))
 
 
 def sigmoid_derivative(x: float) -> float:
