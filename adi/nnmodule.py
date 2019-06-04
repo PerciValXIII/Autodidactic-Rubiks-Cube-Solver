@@ -18,6 +18,10 @@ class NNModule:
         self._a = [np.zeros((s, 1)) for s in self._sizes]
         self._init_weights()
         self._init_biases()
+        self._init_velocities()
+
+        self._vel_factor = 0.9
+        self._vel_eps = 0.01
 
     def _init_weights(self):
         """Glorot initialization"""
@@ -27,11 +31,15 @@ class NNModule:
     def _init_biases(self):
         self._b = [np.zeros((s, 1)) for s in self._sizes[1:]]
 
+    def _init_velocities(self):
+        self._velW = [np.zeros_like(w) for w in self._W]
+        self._velb = [np.zeros_like(b) for b in self._b]
+
     def evaluate(self, X: np.array, activation_applied: bool = True) -> np.array:
         self._feed_forward(X)
         return self._a[-1] if activation_applied else self._z[-1]
 
-    def learn(self, X: np.array, Y: Union[np.array, List[int]], weights: List[int]) -> np.array:
+    def learn(self, X: np.array, Y: Union[np.array, List[int]], weights: List[float]) -> np.array:
         raise NotImplemented
 
     def learn_from_delta(self, delta: np.array, rate: float):
@@ -61,8 +69,10 @@ class NNModule:
             nabla_W.insert(0, delta @ self._a[-l - 1].T)
             nabla_b.insert(0, np.sum(delta, 1)[:, None])
         for l in range(self._nlayers - 1):
-            self._W[l] -= rate * nabla_W[l]
-            self._b[l] -= rate * nabla_b[l]
+            self._velW[l] = self._vel_factor * self._velW[l] + (1. - self._vel_factor) * nabla_W[l] * nabla_W[l]
+            self._velb[l] = self._vel_factor * self._velb[l] + (1. - self._vel_factor) * nabla_b[l] * nabla_b[l]
+            self._W[l] -= rate * nabla_W[l] / (self._vel_factor + np.sqrt(self._velW[l]))
+            self._b[l] -= rate * nabla_b[l] / (self._vel_factor + np.sqrt(self._velb[l]))
 
         return np.dot(self._W[0].T, delta) * self._activ.der(self._z[0])
 
@@ -75,7 +85,7 @@ class SoftmaxCrossEntropyNNModule(NNModule):
         super()._feed_forward(X)
         self._a[-1] = np.apply_along_axis(softmax, 0, self._z[-1])
 
-    def learn(self, X: np.array, Y: List[int], weights: List[int]) -> np.array:
+    def learn(self, X: np.array, Y: List[int], weights: List[float]) -> np.array:
         batch_size = X.shape[1]
         assert X.shape[0] == self._sizes[0]
         assert len(Y) == len(weights) == batch_size
@@ -99,7 +109,7 @@ class MSENNModule(NNModule):
         super()._setup()
         self._cost = MSE_operators
 
-    def learn(self, X: np.array, Y: np.array, weights: List[int]) -> np.array:
+    def learn(self, X: np.array, Y: np.array, weights: List[float]) -> np.array:
         batch_size = X.shape[1]
         assert X.shape[0] == self._sizes[0]
         assert Y.shape == (self._sizes[-1], batch_size)

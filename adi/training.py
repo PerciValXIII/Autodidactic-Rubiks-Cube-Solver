@@ -40,8 +40,3 @@ class AutodidacticIterator:
             depths = [1. / sample.depth for sample in X]
             self._net.learn(X=np.array([x.one_hot_encode(float) for x in cubes]).T,
                             values=best_values, policies=best_policies, weights=depths)
-
-
-if __name__ == '__main__':
-    np.random.seed(0)
-    AutodidacticIterator().train()
