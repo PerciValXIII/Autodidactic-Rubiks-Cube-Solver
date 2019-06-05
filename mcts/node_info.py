@@ -12,7 +12,7 @@ class NodeInfo(NamedTuple):
 
     @classmethod
     def create_new(cls, probs: List[float]) -> 'NodeInfo':
-        return NodeInfo(is_leaf=False,
+        return NodeInfo(is_leaf=True,
                         N=[0 for _ in probs],
                         W=[0. for _ in probs],
                         L=[0. for _ in probs],
