@@ -1,7 +1,9 @@
-from typing import List
+from typing import List, Iterable
 
 from adi.fullnet import FullNet
-from cube.model import Cube
+from cube.model import Cube, ImmutableCube
+from cube.moves import Move
+from mcts.bfser import BFSer
 from mcts.node_info import NodeInfo
 
 
@@ -35,4 +37,13 @@ class Solver:
         pass
 
     def _extract_final_sequence(self, root: Cube) -> List[int]:
-        return BFSer().get_shortest_path_from(root, self._tree.keys())
+        path = BFSer(root, set(self._tree.keys())).get_shortest_path_from()
+        return list(self._extract_moves(path))
+
+    def _extract_moves(self, path: List[Cube]) -> Iterable[Move]:
+        for cur, next in zip(path[:-1], path[1:]):
+            imm = ImmutableCube(cur)
+            for move in list(Move):
+                if imm.change_by(move) == next:
+                    yield move
+                    break
