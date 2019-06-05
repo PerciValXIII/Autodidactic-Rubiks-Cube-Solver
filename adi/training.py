@@ -30,7 +30,7 @@ class AutodidacticIterator:
             for x, _ in X:
                 values = []
                 for child in get_children_of(x):
-                    estimated_value = self._net.evaluate(child.one_hot_encode(float).T[:, None])[0].value
+                    estimated_value = self._net.evaluate(child.one_hot_encode().T[:, None])[0].value
                     reward = 1. if child.is_solved() else -1.
                     values.append(estimated_value + reward)
                 best_values.append(np.max(values))
@@ -38,5 +38,5 @@ class AutodidacticIterator:
 
             cubes = [sample.cube for sample in X]
             depths = [1. / sample.depth for sample in X]
-            self._net.learn(X=np.array([x.one_hot_encode(float) for x in cubes]).T,
+            self._net.learn(X=np.array([x.one_hot_encode() for x in cubes]).T,
                             values=best_values, policies=best_policies, weights=depths)

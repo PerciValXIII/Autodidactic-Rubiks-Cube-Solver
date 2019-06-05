@@ -38,7 +38,7 @@ class Cube:
         return all([len(set(face)) == 1
                     for face in self._faces.values()])
 
-    def one_hot_encode(self, dtype: type = bool) -> np.array:
+    def one_hot_encode(self, dtype: type = float) -> np.array:
         result = np.zeros((14, 6), dtype=dtype)
 
         result[0, self.up[2]] = 1

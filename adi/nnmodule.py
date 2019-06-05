@@ -47,7 +47,7 @@ class NNModule:
 
     def _feed_forward(self, X: np.array):
         assert X.shape[0] == self._sizes[0]
-        assert X.shape[1] >= 1
+        if len(X.shape) == 1: X = X[:, None]
 
         self._a[0] = self._z[0] = X
         for l in range(self._nlayers - 1):
