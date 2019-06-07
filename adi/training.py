@@ -1,6 +1,8 @@
+import matplotlib.pyplot as plt
 import numpy as np
 
 from adi.fullnet import FullNet
+from adi.nnmodule import MSE_COSTS, SOFTMAX_COSTS
 from adi.sampling import generate_samples
 from cube.model import get_children_of
 
@@ -40,3 +42,20 @@ class AutodidacticIterator:
             depths = [1. / sample.depth for sample in X]
             self._net.learn(X=np.array([x.one_hot_encode() for x in cubes]).T,
                             values=best_values, policies=best_policies, weights=depths)
+
+        self._plot_costs()
+
+    @property
+    def net(self):
+        return self._net
+
+    def _plot_costs(self):
+        fig, ax1 = plt.subplots()
+        ax1.plot(range(len(MSE_COSTS)), MSE_COSTS)
+        ax1.set_ylabel('mse_cost', color='b')
+        # ax1.set_ylim([0, 2])
+        ax2 = ax1.twinx()
+        ax2.plot(range(len(SOFTMAX_COSTS)), SOFTMAX_COSTS, 'g')
+        ax2.set_ylabel('softmax_cost', color='g')
+        # ax2.set_ylim([0, 5])
+        plt.show()

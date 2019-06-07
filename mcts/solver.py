@@ -18,7 +18,7 @@ class Solver:
         self._loss_step = 0.1
         self._exploration_factor = 2.
 
-    def solve(self, root: Cube) -> List[int]:
+    def solve(self, root: Cube) -> List[Move]:
         if root.is_solved(): return []
         self._initialize_tree(root)
         self._backup_stack = []
@@ -53,7 +53,7 @@ class Solver:
             self._tree[state].update_on_backup(move, self._loss_step, propagation_value)
         self._backup_stack.clear()
 
-    def _extract_final_sequence(self, root: Cube) -> List[int]:
+    def _extract_final_sequence(self, root: Cube) -> List[Move]:
         path = BFSer(root, set(self._tree.keys())).get_shortest_path_from()
         return list(self._extract_moves(path))
 
