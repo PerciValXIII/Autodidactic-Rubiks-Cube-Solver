@@ -6,7 +6,7 @@ from performance.effectiveness import generate_random_cube
 from plotting.plotter import Plotter
 
 if __name__ == '__main__':
-    with open('./performance/trained_net500.pkl', 'rb') as input:
+    with open('./nets/trained_net500.pkl', 'rb') as input:
         net = pickle.load(input)
     solver = Solver(net)
 
