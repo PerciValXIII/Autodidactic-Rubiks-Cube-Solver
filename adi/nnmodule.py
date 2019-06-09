@@ -4,6 +4,8 @@ import numpy as np
 
 from adi.utils import OperatorPair, sigmoid_operators, softmax, cross_entropy, ELU_operators, MSE_operators
 
+MSE_COSTS = []
+SOFTMAX_COSTS = []
 
 class NNModule:
     def __init__(self, sizes: List[int], activation_operators: OperatorPair, learning_rate: float):
@@ -21,7 +23,7 @@ class NNModule:
         self._init_velocities()
 
         self._vel_factor = 0.9
-        self._vel_eps = 0.01
+        self._vel_eps = 1e-5
 
     def _init_weights(self):
         """Glorot initialization"""
@@ -71,8 +73,8 @@ class NNModule:
         for l in range(self._nlayers - 1):
             self._velW[l] = self._vel_factor * self._velW[l] + (1. - self._vel_factor) * nabla_W[l] * nabla_W[l]
             self._velb[l] = self._vel_factor * self._velb[l] + (1. - self._vel_factor) * nabla_b[l] * nabla_b[l]
-            self._W[l] -= rate * nabla_W[l] / (self._vel_factor + np.sqrt(self._velW[l]))
-            self._b[l] -= rate * nabla_b[l] / (self._vel_factor + np.sqrt(self._velb[l]))
+            self._W[l] -= rate * nabla_W[l] / (np.sqrt(self._vel_eps + self._velW[l]))
+            self._b[l] -= rate * nabla_b[l] / (np.sqrt(self._vel_eps + self._velb[l]))
 
         return np.dot(self._W[0].T, delta) * self._activ.der(self._z[0])
 
@@ -93,10 +95,10 @@ class SoftmaxCrossEntropyNNModule(NNModule):
 
         self._feed_forward(X)
         cost = cross_entropy(self._a[-1], Y, weights)
-        print(f'SoftmaxCost:\t{cost}')
+        SOFTMAX_COSTS.append(cost / batch_size)
 
         delta = self._a[-1]
-        delta[Y, range(batch_size)] -= 1.
+        delta[Y, range(batch_size)] -= 1 * weights
 
         return self._propagate_and_return_delta(delta, self._learning_rate / batch_size)
 
@@ -116,9 +118,9 @@ class MSENNModule(NNModule):
         assert len(weights) == batch_size
 
         self._feed_forward(X)
-        cost = self._cost.func(self._a[-1], Y)
-        print(f'MSECost:\t\t{np.max(cost)}')
+        cost = self._cost.func(self._a[-1], Y) * weights
+        MSE_COSTS.append(np.max(cost))
 
-        delta = self._cost.der(self._a[-1], Y) * self._activ.der(self._z[-1])
+        delta = weights * self._cost.der(self._a[-1], Y) * self._activ.der(self._z[-1])
 
         return self._propagate_and_return_delta(delta, self._learning_rate / batch_size)

@@ -1,4 +1,5 @@
-from typing import List, Iterable
+import threading
+from typing import List, Iterable, Union
 
 import numpy as np
 
@@ -18,16 +19,23 @@ class Solver:
         self._loss_step = 0.1
         self._exploration_factor = 2.
 
-    def solve(self, root: Cube) -> List[int]:
+    def solve(self, root: Cube, timeout: Union[int, None] = None) -> Union[List[Move], None]:
+        self._stop = threading.Event()
         if root.is_solved(): return []
         self._initialize_tree(root)
         self._backup_stack = []
         root = ImmutableCube(root)
 
-        while True:
+        if timeout is not None:
+            timer = threading.Timer(timeout, lambda: self._stop.set())
+            timer.daemon = True
+            timer.start()
+
+        while not self._stop.is_set():
             if self._traverse_for_solved(root):
                 return self._extract_final_sequence(root)
             self._backup()
+        return None
 
     def _initialize_tree(self, root: Cube):
         self._tree = dict()
@@ -53,7 +61,7 @@ class Solver:
             self._tree[state].update_on_backup(move, self._loss_step, propagation_value)
         self._backup_stack.clear()
 
-    def _extract_final_sequence(self, root: Cube) -> List[int]:
+    def _extract_final_sequence(self, root: Cube) -> List[Move]:
         path = BFSer(root, set(self._tree.keys())).get_shortest_path_from()
         return list(self._extract_moves(path))
 

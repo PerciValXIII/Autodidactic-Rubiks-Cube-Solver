@@ -5,12 +5,12 @@ import numpy as np
 from adi.nnmodule import NNModule, SoftmaxCrossEntropyNNModule, MSENNModule
 from adi.utils import ELU_operators
 
-BODY_LEARNING_RATE = 0.01
-POLICY_LEARNING_RATE = 0.1
+BODY_LEARNING_RATE = 0.02
+POLICY_LEARNING_RATE = 0.2
 VALUE_LEARNING_RATE = 0.001
 
-POLICY_PROP_FACTOR = 1.
-VALUE_PROP_FACTOR = 1.
+POLICY_PROP_FACTOR = .3
+VALUE_PROP_FACTOR = .7
 
 
 class ValuePolicyPair(NamedTuple):

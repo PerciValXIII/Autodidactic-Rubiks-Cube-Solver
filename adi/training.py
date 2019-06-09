@@ -13,16 +13,17 @@ class AutodidacticIterator:
                             self._policy_net_sizes)
 
     def _set_hyper(self):
-        self._iteration_rounds = 100
+        self._iteration_rounds = 500
 
         self._body_net_sizes = [14 * 6, 128, 64]
         self._value_net_sizes = [self._body_net_sizes[-1], 1]
         self._policy_net_sizes = [self._body_net_sizes[-1], 6]
 
-        self._sampling_depth = 8
-        self._sampling_iterations = 4
+        self._sampling_depth = 64
+        self._sampling_iterations = 32
 
     def train(self):
+        rate = 1.0
         for _ in range(self._iteration_rounds):
             X = list(generate_samples(depth=self._sampling_depth,
                                       iterations=self._sampling_iterations))
@@ -37,6 +38,13 @@ class AutodidacticIterator:
                 best_policies.append(np.argmax(values))
 
             cubes = [sample.cube for sample in X]
-            depths = [1. / sample.depth for sample in X]
+            depths = [rate / sample.depth for sample in X]
+            rate *= 0.99
             self._net.learn(X=np.array([x.one_hot_encode() for x in cubes]).T,
                             values=best_values, policies=best_policies, weights=depths)
+
+        # Plotter().plot_costs(MSE_COSTS, SOFTMAX_COSTS)
+
+    @property
+    def net(self):
+        return self._net
